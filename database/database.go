@@ -33,7 +33,7 @@ var DB *pgxpool.Pool
 func InitDB() {
 	connString := os.Getenv("DATABASE_URL")
 	if connString == "" {
-		connString = "postgres://user:password@127.0.0.1:5432/bookings_v1?sslmode=disable"
+		log.Fatal("DATABASE_URL environment variable is not set. Please set it to your PostgreSQL connection string.")
 	}
 
 	var err error

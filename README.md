@@ -30,20 +30,29 @@ A comprehensive Go-based REST API for managing medical appointments with Postgre
 
 3. **Create a database**: Create a PostgreSQL database for the application:
    ```sql
-   CREATE DATABASE bookings_v1;
-   CREATE USER admin WITH PASSWORD '4992261SSS';
-   GRANT ALL PRIVILEGES ON DATABASE bookings_v1 TO admin;
+   CREATE DATABASE bookings_db;
+   CREATE USER bookings_user WITH PASSWORD 'your_secure_password';
+   GRANT ALL PRIVILEGES ON DATABASE bookings_db TO bookings_user;
    ```
 
-4. **Update connection string** (optional): The application uses environment variable `DATABASE_URL` or defaults to:
+4. **Set database connection**: Set the `DATABASE_URL` environment variable with your database credentials:
    ```bash
-   postgres://admin:4992261SSS@127.0.0.1:5432/bookings_v1?sslmode=disable
+   export DATABASE_URL="postgres://bookings_user:your_secure_password@localhost:5432/bookings_db?sslmode=disable"
    ```
 
-   To use a different database, set the `DATABASE_URL` environment variable:
-   ```bash
-   export DATABASE_URL="postgres://username:password@localhost:5432/your_database_name?sslmode=disable"
-   ```
+   **Security Note**: Never commit database credentials to version control. Use environment variables or secure credential management systems in production.
+
+## Environment Variables
+
+The application requires the following environment variables:
+
+- `DATABASE_URL`: PostgreSQL connection string (required)
+  - Format: `postgres://username:password@host:port/database?sslmode=disable`
+
+Example:
+```bash
+export DATABASE_URL="postgres://bookings_user:my_secure_password@localhost:5432/bookings_db?sslmode=disable"
+```
 
 ## Database Schema
 
@@ -79,34 +88,44 @@ The application creates the following tables with PostgreSQL enums:
 
 ## Running the Application
 
-1. Navigate to the project directory:
+1. **Set environment variables**:
+   ```bash
+   export DATABASE_URL="postgres://bookings_user:your_secure_password@localhost:5432/bookings_db?sslmode=disable"
+   ```
+
+2. Navigate to the project directory:
    ```bash
    cd c:\dev\DATABASE\Bookings_golang
    ```
 
-2. Run the application:
+3. Run the application:
    ```bash
    go run main.go
    ```
 
 The application will:
-- Connect to PostgreSQL database
+- Connect to PostgreSQL database using the DATABASE_URL
 - Create all necessary tables, enums, and indexes
 - Start the HTTP server on port 8080
 - Enable CORS for cross-origin requests
 
-3. **Test the API**:
+4. **Test the API**:
    ```bash
    curl http://localhost:8080/health
    ```
 
 ## Testing
 
-Run the comprehensive test suite:
-```bash
-go build -o test_db.exe test_db.go
-.\test_db.exe
-```
+1. **Set environment variables**:
+   ```bash
+   export DATABASE_URL="postgres://bookings_user:your_secure_password@localhost:5432/bookings_db?sslmode=disable"
+   ```
+
+2. Run the comprehensive test suite:
+   ```bash
+   go build -o test_db.exe test_db.go
+   .\test_db.exe
+   ```
 
 This will test all database operations and API endpoints.
 
