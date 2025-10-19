@@ -1,0 +1,128 @@
+
+
+    -- Medical Appointment Booking System Schema
+
+    clinics
+        id (serial, primary key)
+        name (text, required, unique)
+        address (text)
+        phone (text)
+        email (email)
+        active (bool, default: true)
+
+    patients
+        id (serial, primary key)
+        first_name (text, required)
+        last_name (text, required)
+        email (email, unique)
+        phone (text)
+        date_of_birth (date)
+        medical_record_number (text, unique)
+        insurance_provider (text)
+        insurance_id (text)
+        emergency_contact_name (text)
+        emergency_contact_phone (text)
+        active (bool, default: true)
+        created_at (timestamp, default: now)
+
+    employees
+        id (serial, primary key)
+        clinic_id (foreign key → clinics, required)
+        first_name (text, required)
+        last_name (text, required)
+        email (email, unique)
+        phone (text)
+        license_number (text, unique) -- medical license
+        specialty (text) -- e.g., "Cardiology", "Dermatology"
+        timezone (text, default: 'Asia/Colombo')
+        active (bool, default: true)
+        created_at (timestamp, default: now)
+
+    services
+        id (serial, primary key)
+        name (text, unique, required)
+        description (text)
+        duration_minutes (integer, required, >0)
+        price (decimal)
+        specialty_required (text) -- matches employee specialty
+        active (bool, default: true)
+
+    employee_services (junction)
+        employee_id (foreign key → employees, required, cascade delete)
+        service_id (foreign key → services, required, cascade delete)
+        Unique pair (employee_id, service_id)
+
+    work_templates (weekly work hours)
+        id (serial, primary key)
+        employee_id (foreign key → employees, required)
+        weekday (integer 1..7, required) -- 1=Mon … 7=Sun
+        start_time (time) -- HH:mm
+        end_time (time)
+        slot_granularity_minutes (integer, default: 15)
+        is_active (bool, default: true)
+
+    day_overrides (public holidays / special hours)
+        id (serial, primary key)
+        employee_id (foreign key → employees, required)
+        date (date, required)
+        is_closed (bool, default: false)
+        start_time (time, optional)
+        end_time (time, optional)
+        reason (text) -- "Holiday", "Conference", etc.
+        Unique pair (employee_id, date)
+
+    time_off (vacations, sick leave)
+        id (serial, primary key)
+        employee_id (foreign key → employees, required)
+        start_datetime (timestamp, required) -- UTC
+        end_datetime (timestamp, required)
+        reason (text) -- "Vacation", "Sick Leave", etc.
+        approved (bool, default: false)
+
+    slot_holds (temporary reservations)
+        id (serial, primary key)
+        employee_id (foreign key → employees, required)
+        service_id (foreign key → services, required)
+        start_datetime (timestamp, required) -- UTC
+        end_datetime (timestamp, required)
+        patient_id (foreign key → patients, optional)
+        hold_token (text, required, unique) -- for client identification
+        expires_at (timestamp, required)
+        created_at (timestamp, default: now)
+
+    appointments
+        id (serial, primary key)
+        patient_id (foreign key → patients, required)
+        employee_id (foreign key → employees, required)
+        service_id (foreign key → services, required)
+        clinic_id (foreign key → clinics, required)
+        start_datetime (timestamp, required) -- UTC
+        end_datetime (timestamp, required) -- calculated from service duration
+        status (enum: SCHEDULED, CONFIRMED, IN_PROGRESS, COMPLETED, CANCELLED, NO_SHOW, default: SCHEDULED)
+        appointment_type (enum: INITIAL_CONSULTATION, FOLLOW_UP, PROCEDURE, EMERGENCY)
+        notes (text) -- patient notes/symptoms
+        medical_notes (text) -- doctor's notes (after appointment)
+        cancellation_reason (text)
+        payment_status (enum: PENDING, PAID, REFUNDED, default: PENDING)
+        payment_amount (decimal)
+        created_at (timestamp, default: now)
+        updated_at (timestamp, default: now)
+
+    waiting_list
+        id (serial, primary key)
+        patient_id (foreign key → patients, required)
+        service_id (foreign key → services, required)
+        preferred_employee_id (foreign key → employees, optional)
+        requested_date (date)
+        urgency_level (enum: LOW, MEDIUM, HIGH, URGENT, default: MEDIUM)
+        notes (text)
+        status (enum: ACTIVE, CONTACTED, SCHEDULED, EXPIRED, default: ACTIVE)
+        created_at (timestamp, default: now)
+
+    -- Indexes for performance
+    CREATE INDEX idx_appointments_patient_id ON appointments(patient_id);
+    CREATE INDEX idx_appointments_employee_id ON appointments(employee_id);
+    CREATE INDEX idx_appointments_datetime ON appointments(start_datetime);
+    CREATE INDEX idx_appointments_status ON appointments(status);
+    CREATE INDEX idx_slot_holds_datetime ON slot_holds(start_datetime, end_datetime);
+    CREATE INDEX idx_time_off_datetime ON time_off(start_datetime, end_datetime);
